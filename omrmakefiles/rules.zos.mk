@@ -92,7 +92,7 @@ GLOBAL_CPPFLAGS+=-DJ9ZOS390 -DLONGLONG -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -D
 # a,goff   Assemble into GOFF object files
 # NOANSIALIAS Do not generate ALIAS binder control statements
 # TARGET   Generate code for the target operating system
-GLOBAL_FLAGS+=-Wc,"xplink,rostring,FLOAT(IEEE,FOLD,AFP),enum(4)" -Wa,goff -Wc,NOANSIALIAS -Wc,"TARGET($(OMR_ZOS_COMPILE_TARGET))"
+GLOBAL_FLAGS+=-Wc,"xplink,rostring,FLOAT(IEEE,NOFOLD,AFP),enum(4)" -Wa,goff -Wc,NOANSIALIAS -Wc,"TARGET($(OMR_ZOS_COMPILE_TARGET))"
 
 ifeq (1,$(USE_NATIVE_ENCODING))
   GLOBAL_CPPFLAGS+=-DOMR_EBCDIC

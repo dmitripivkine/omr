@@ -131,7 +131,7 @@ elseif(OMR_OS_ZOS)
 	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 		"\"-Wc,xplink\""               # link with xplink calling convention
 		"\"-Wc,rostring\""             # place string literals in read only storage
-		"\"-Wc,FLOAT(IEEE,FOLD,AFP)\"" # Use IEEE (instead of IBM Hex Format) style floats
+		"\"-Wc,FLOAT(IEEE,NOFOLD,AFP)\"" # Use IEEE (instead of IBM Hex Format) style floats
 		"\"-Wc,enum(4)\""              # Specifies how many bytes of storage enums occupy
 		"\"-Wa,goff\""                 # Assemble into GOFF object files
 		"\"-Wc,NOANSIALIAS\""          # Do not generate ALIAS binder control statements
