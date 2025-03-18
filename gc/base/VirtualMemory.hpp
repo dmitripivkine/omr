@@ -72,11 +72,6 @@ private:
 	bool freeMemory();
 
 protected:
-	/*
-	 * use "OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE" for mode
-	 */
-	static MM_VirtualMemory* newInstance(MM_EnvironmentBase* env, uintptr_t heapAlignment, uintptr_t size, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t tailPadding, void* preferredAddress, void* ceiling, uintptr_t mode, uintptr_t options, uint32_t memoryCategory);
-
 	bool initialize(MM_EnvironmentBase* env, uintptr_t size, void* preferredAddress, void* ceiling, uintptr_t options, uint32_t memoryCategory);
 	virtual void tearDown(MM_EnvironmentBase* env);
 
@@ -104,9 +99,6 @@ protected:
 		_typeId = __FUNCTION__;
 	}
 
-	virtual void kill(MM_EnvironmentBase* env);
-
-	virtual bool commitMemory(void* address, uintptr_t size);
 	virtual bool decommitMemory(void* address, uintptr_t size, void* lowValidAddress, void* highValidAddress);
 	void roundDownTop(uintptr_t rounding);
 
@@ -120,14 +112,6 @@ protected:
 	 * @return true on success, false on failure
 	 */
 	virtual bool setNumaAffinity(uintptr_t numaNode, void* address, uintptr_t byteAmount);
-
-	/**
-	 * Return the heap base of the virtual memory object.
-	 */
-	MMINLINE void* getHeapBase()
-	{
-		return _heapBase;
-	};
 
 	/**
 	 * Return the top of the heap of the virtual memory object.
@@ -195,6 +179,24 @@ protected:
 	}
 
 public:
+	/*
+	 * use "OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE" for mode
+	 */
+	static MM_VirtualMemory* newInstance(MM_EnvironmentBase* env, uintptr_t heapAlignment, uintptr_t size, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t tailPadding, void* preferredAddress, void* ceiling, uintptr_t mode, uintptr_t options, uint32_t memoryCategory);
+
+	virtual void kill(MM_EnvironmentBase* env);
+
+	/**
+	 * Return the heap base of the virtual memory object.
+	 */
+	MMINLINE void* getHeapBase()
+	{
+		return _heapBase;
+	};
+
+	virtual bool commitMemory(void* address, uintptr_t size);
+
+
 /*
  * friends
  */
