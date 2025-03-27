@@ -99,7 +99,6 @@ protected:
 		_typeId = __FUNCTION__;
 	}
 
-	virtual bool decommitMemory(void* address, uintptr_t size, void* lowValidAddress, void* highValidAddress);
 	void roundDownTop(uintptr_t rounding);
 
 	/*
@@ -114,14 +113,6 @@ protected:
 	virtual bool setNumaAffinity(uintptr_t numaNode, void* address, uintptr_t byteAmount);
 
 	/**
-	 * Return the top of the heap of the virtual memory object.
-	 */
-	MMINLINE void* getHeapTop()
-	{
-		return _heapTop;
-	};
-
-	/**
 	 * Return the heap file descriptor.
 	 */
 	MMINLINE int getHeapFileDescriptor()
@@ -129,21 +120,6 @@ protected:
 		return _identifier.fd;
 	}
 
-	/** 
-	 * Return the size of the pages used in the virtual memory object
-	 */
-	MMINLINE uintptr_t getPageSize()
-	{
-		return _pageSize;
-	}
-
-	/** 
-	 * Return the flags describing the pages used in the virtual memory object
-	 */
-	MMINLINE uintptr_t getPageFlags()
-	{
-		return _pageFlags;
-	}
 
 	/**
 	 * Return number of memory consumers attached to this virtual memory object
@@ -179,11 +155,14 @@ protected:
 	}
 
 public:
-	/*
+	/**
 	 * use "OMRPORT_VMEM_MEMORY_MODE_READ | OMRPORT_VMEM_MEMORY_MODE_WRITE" for mode
 	 */
 	static MM_VirtualMemory* newInstance(MM_EnvironmentBase* env, uintptr_t heapAlignment, uintptr_t size, uintptr_t pageSize, uintptr_t pageFlags, uintptr_t tailPadding, void* preferredAddress, void* ceiling, uintptr_t mode, uintptr_t options, uint32_t memoryCategory);
 
+	/**
+	 * Kill virtual memory instance
+	 */
 	virtual void kill(MM_EnvironmentBase* env);
 
 	/**
@@ -194,8 +173,39 @@ public:
 		return _heapBase;
 	};
 
+	/**
+	 * Return the top of the heap of the virtual memory object.
+	 */
+	MMINLINE void* getHeapTop()
+	{
+		return _heapTop;
+	};
+
+	/**
+	 * Return the size of the pages used in the virtual memory object
+	 */
+	MMINLINE uintptr_t getPageSize()
+	{
+		return _pageSize;
+	}
+
+	/**
+	 * Return the flags describing the pages used in the virtual memory object
+	 */
+	MMINLINE uintptr_t getPageFlags()
+	{
+		return _pageFlags;
+	}
+
+	/**
+	 * Commit virtual memory range
+	 */
 	virtual bool commitMemory(void* address, uintptr_t size);
 
+	/**
+	 * Decommit virtual memory range
+	 */
+	virtual bool decommitMemory(void* address, uintptr_t size, void* lowValidAddress, void* highValidAddress);
 
 /*
  * friends

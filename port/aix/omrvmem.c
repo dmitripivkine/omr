@@ -1191,6 +1191,8 @@ allocAnywhere:
 static void *
 getMemoryInRangeForDefaultPages(struct OMRPortLibrary *portLibrary, struct J9PortVmemIdentifier *identifier, OMRMemCategory *category, uintptr_t byteAmount, void *startAddress, void *endAddress, uintptr_t alignmentInBytes, uintptr_t vmemOptions, uintptr_t mode)
 {
+	void *result = NULL;
+
 #if !defined(OMR_ENV_DATA64)
 	/**
 	 * Using shmat to allocate vmem on AIX32 reduces the number of segments which can be used for thread stacks.  Thus, explicitly use the mmap
@@ -1225,9 +1227,19 @@ getMemoryInRangeForDefaultPages(struct OMRPortLibrary *portLibrary, struct J9Por
 	 */
 	if (__ENHANCED_AFFINITY() && (OMR_ARE_NO_BITS_SET(mode, OMRPORT_VMEM_MEMORY_MODE_EXECUTE | OMRPORT_VMEM_NO_AFFINITY))) {
 		/* If we have __ENHANCED_AFFINITY() and we're not looking for executable memory */
-		return reserveLargePages(portLibrary, identifier, category, byteAmount, startAddress, endAddress, PPG_vmem_pageSize[0], alignmentInBytes, vmemOptions, mode);
+
+		result = reserveLargePages(portLibrary, identifier, category, byteAmount, startAddress, endAddress, PPG_vmem_pageSize[0], alignmentInBytes, vmemOptions, mode);
+		printf("--getMemoryInRangeForDefaultPages: reserved at %p size %p bytes using shmat(), \n", result, (void *)byteAmount);
+		return result;
+
+//		return reserveLargePages(portLibrary, identifier, category, byteAmount, startAddress, endAddress, PPG_vmem_pageSize[0], alignmentInBytes, vmemOptions, mode);
 	} else {
-		return getMemoryInRangeForDefaultPagesUsingMmap(portLibrary, identifier, category, byteAmount, startAddress, endAddress, alignmentInBytes, vmemOptions, mode);
+
+		result = getMemoryInRangeForDefaultPagesUsingMmap(portLibrary, identifier, category, byteAmount, startAddress, endAddress, alignmentInBytes, vmemOptions, mode);
+		printf("--getMemoryInRangeForDefaultPages: reserved at %p size %p bytes using mmap(), \n", result, (void *)byteAmount);
+		return result;
+
+//		return getMemoryInRangeForDefaultPagesUsingMmap(portLibrary, identifier, category, byteAmount, startAddress, endAddress, alignmentInBytes, vmemOptions, mode);
 	}
 #endif /* !defined(OMR_ENV_DATA64) */
 }
