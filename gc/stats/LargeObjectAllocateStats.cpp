@@ -99,19 +99,19 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 
 	if (env->getExtensions()->isDebugConcurrentScavengerPageAlignment()) {
 		uintptr_t example = 0x0ebd68f0;
-		uintptr_t leading = MM_Bits::leadingZeroes(example);
+		uintptr_t leading = MM_Bits::trailingZeroes(example);
 		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
 
 		example = 0x10ebd68f0;
-		leading = MM_Bits::leadingZeroes(example);
+		leading = MM_Bits::trailingZeroes(example);
 		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
 
 		example = 0x100000000ebd68f0;
-		leading = MM_Bits::leadingZeroes(example);
+		leading = MM_Bits::trailingZeroes(example);
 		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
 
 		example = 0x000000f0;
-		leading = MM_Bits::leadingZeroes(example);
+		leading = MM_Bits::trailingZeroes(example);
 		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
 	}
 
