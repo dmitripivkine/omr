@@ -33,6 +33,7 @@
 #include "ModronAssertions.h"
 #include "AtomicOperations.hpp"
 
+#include "Bits.hpp"
 
 MM_LargeObjectAllocateStats *
 MM_LargeObjectAllocateStats::newInstance(MM_EnvironmentBase *env, uint16_t maxAllocateSizes, uintptr_t largeObjectThreshold, uintptr_t veryLargeObjectThreshold, float sizeClassRatio, uintptr_t maxHeapSize, uintptr_t tlhMaximumSize, uintptr_t tlhMinimumSize,  uintptr_t factorVeryLargeEntryPool)
@@ -95,6 +96,12 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 	_sizeClassRatio = sizeClassRatio;
 	_sizeClassRatioLogInversed = 1.0f / logf(_sizeClassRatio);
 	_maxHeapSize = maxHeapSize;
+
+	if (env->getExtensions()->isDebugConcurrentScavengerPageAlignment()) {
+		uintptr_t example = 0x0ebd68f0;
+		uintptr_t leading = MM_Bits::leadingZeroes(example);
+		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+	}
 
 	/* To accurately maintain for stats for top _maxAllocateSizes different sizes,
 	 * we'll actually maintain stats for 2x more, and discard info for lower 1/2 */
