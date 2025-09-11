@@ -101,6 +101,18 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 		uintptr_t example = 0x0ebd68f0;
 		uintptr_t leading = MM_Bits::leadingZeroes(example);
 		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+
+		example = 0x10ebd68f0;
+		leading = MM_Bits::leadingZeroes(example);
+		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+
+		example = 0x100000000ebd68f0;
+		leading = MM_Bits::leadingZeroes(example);
+		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+
+		example = 0x000000f0;
+		leading = MM_Bits::leadingZeroes(example);
+		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
 	}
 
 	/* To accurately maintain for stats for top _maxAllocateSizes different sizes,
