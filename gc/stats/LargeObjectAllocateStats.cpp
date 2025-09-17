@@ -97,22 +97,23 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 	_sizeClassRatioLogInversed = 1.0f / logf(_sizeClassRatio);
 	_maxHeapSize = maxHeapSize;
 
-	if (env->getExtensions()->isDebugConcurrentScavengerPageAlignment()) {
-		uintptr_t example = 0x0ebd68f0;
-		uintptr_t leading = MM_Bits::trailingZeroes(example);
-		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+	if (0 != env->getExtensions()->debug) {
 
-		example = 0x10ebd68f0;
-		leading = MM_Bits::trailingZeroes(example);
-		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+		const uintptr_t topBit = sizeof(uintptr_t) * 8 - 1;
 
-		example = 0x100000000ebd68f0;
-		leading = MM_Bits::trailingZeroes(example);
-		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+		uintptr_t size = 0x0ebd68f0;
 
-		example = 0x000000f0;
-		leading = MM_Bits::trailingZeroes(example);
-		printf ("----- number of leading zeroes for %p is %p\n", (void *)example, (void *)leading);
+		uintptr_t leading = MM_Bits::trailingZeroes(size);
+		uintptr_t index = 4 * (topBit - leading) + ((size >> (topBit - leading - 2)) & 0x3);
+
+		printf ("----- number of leading zeroes for %p is %p, index %d\n", (void *)size, (void *)leading, (int)index);
+
+		size = env->getExtensions()->debug;
+
+		leading = MM_Bits::trailingZeroes(size);
+		index = 4 * (topBit - leading) + ((size >> (topBit - leading - 2)) & 0x3);
+
+		printf ("----- number of leading zeroes for %p is %p, index %d\n", (void *)size, (void *)leading, (int)index);
 	}
 
 	/* To accurately maintain for stats for top _maxAllocateSizes different sizes,
