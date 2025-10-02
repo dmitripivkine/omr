@@ -27,9 +27,9 @@
 
 #include "omrport.h"
 
-//#include "EnvironmentBase.hpp"
+#include "EnvironmentBase.hpp"
 #include "Forge.hpp"
-//#include "GCExtensionsBase.hpp"
+#include "GCExtensionsBase.hpp"
 #include "ModronAssertions.h"
 #include "AtomicOperations.hpp"
 
@@ -101,13 +101,20 @@ MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(MM_Enviro
 bool
 MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAllocateSizes, uintptr_t largeObjectThreshold, uintptr_t veryLargeObjectThreshold, float sizeClassRatio, uintptr_t maxHeapSize, uintptr_t tlhMaximumSize, uintptr_t tlhMinimumSize, uintptr_t factorVeryLargeEntryPool)
 {
+	MM_GCExtensionsBase *ext = env->getExtensions();
 	OMRPortLibrary *portLibrary = env->getPortLibrary();
+
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
 	_tlhMaximumSize = tlhMaximumSize;
 	_tlhMinimumSize = tlhMinimumSize;
 #endif	
 	_maxAllocateSizes = maxAllocateSizes;
 	_largeObjectThreshold = largeObjectThreshold;
+
+	// to do: temporary debug
+	_shouldUseIntegerSizeToIndex = (2 == ext->debug);
+//	_shouldUseIntegerSizeToIndex = ext->shouldUseIntegerSizeToIndex;
+
 
 	if (_shouldUseIntegerSizeToIndex) {
 		/* These values are hard coded in algorithm and not used for conversion, set for compatibility. */

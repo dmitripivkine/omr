@@ -29,13 +29,11 @@
 
 #include "Base.hpp"
 #include "Bits.hpp"
-#include "EnvironmentBase.hpp"
-#include "GCExtensionsBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
 
-//class MM_EnvironmentBase;
+class MM_EnvironmentBase;
 //class MM_FreeEntrySizeClassStats;
 
 /*
@@ -302,9 +300,6 @@ public:
 		_maxHeapSize(0),
 		_TLHSizeClassIndex(0),
 		_TLHFrequentAllocationSize(0),
-		// to do: use real value instead of debug
-		//_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
-		_shouldUseIntegerSizeToIndex(2 == env->getExtensions()->debug)
 	{
 	}
 
