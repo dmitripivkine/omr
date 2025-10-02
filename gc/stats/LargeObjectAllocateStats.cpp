@@ -22,6 +22,7 @@
  
 #include "LargeObjectAllocateStats.hpp"
 
+#include <math.h>
 #include <stdlib.h>
 
 #include "omrport.h"

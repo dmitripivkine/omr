@@ -23,8 +23,6 @@
 #ifndef LARGEOBJECTALLOCATESTATS_HPP_
 #define LARGEOBJECTALLOCATESTATS_HPP_
 
-#include <math.h>
-
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "spacesaving.h"
