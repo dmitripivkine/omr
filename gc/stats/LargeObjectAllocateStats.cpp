@@ -22,7 +22,6 @@
  
 #include "LargeObjectAllocateStats.hpp"
 
-#include <math.h>
 #include <stdlib.h>
 
 #include "omrport.h"
@@ -56,29 +55,45 @@ MM_LargeObjectAllocateStats::newInstance(MM_EnvironmentBase *env, uint16_t maxAl
 void
 MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(MM_EnvironmentBase *env, uintptr_t veryLargeObjectThreshold, float sizeClassRatio, uintptr_t maxHeapSize)
 {
-	MM_GCExtensionsBase *extensions = env->getExtensions();
-	float sizeClassRatioLog = logf(sizeClassRatio);
+	MM_GCExtensionsBase *ext = env->getExtensions();
 
 	/* ideally, freeMemoryProfileMaxSizeClasses should be initialized only once, way earlier;
 	 * but at the point where most of extension fields are initialized, maxHeapSize is not known yet
 	 */
-	if (0 == extensions->freeMemoryProfileMaxSizeClasses) {
-		uintptr_t largestClassSizeIndex = (uintptr_t)(logf((float)maxHeapSize)/sizeClassRatioLog);
+	if (0 == ext->freeMemoryProfileMaxSizeClasses) {
+		uintptr_t veryLargeEntrySizeClass = 0;
+		uintptr_t largestClassSizeIndex = 0;
 
-		/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold and largeObjectAllocationProfilingVeryLargeObjectSizeClass */
-		uintptr_t veryLargeEntrySizeClass;
-		if (extensions->memoryMax > veryLargeObjectThreshold) {
-			veryLargeEntrySizeClass = (uintptr_t)(logf((float)veryLargeObjectThreshold)/sizeClassRatioLog);
-			extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold = (uintptr_t)powf(sizeClassRatio, (float)veryLargeEntrySizeClass);
+		if (ext->shouldUseIntegerSizeToIndex) {
+			largestClassSizeIndex = this->sizeToIndexInt(maxHeapSize);
+
+			/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold and largeObjectAllocationProfilingVeryLargeObjectSizeClass */
+			if (ext->memoryMax > veryLargeObjectThreshold) {
+				veryLargeEntrySizeClass = this->sizeToIndexInt(veryLargeObjectThreshold);
+				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = indexToSizeInt(veryLargeEntrySizeClass);
+			} else {
+				veryLargeEntrySizeClass = largestClassSizeIndex + 1;
+				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = UDATA_MAX;
+			}
 		} else {
-			veryLargeEntrySizeClass = largestClassSizeIndex + 1;
-			extensions->largeObjectAllocationProfilingVeryLargeObjectThreshold = UDATA_MAX;
+			float sizeClassRatioLogInversed = 1.0f / logf(sizeClassRatio);
+			largestClassSizeIndex = this->sizeToIndexFP(maxHeapSize, sizeClassRatioLogInversed);
+
+			/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold and largeObjectAllocationProfilingVeryLargeObjectSizeClass */
+			if (ext->memoryMax > veryLargeObjectThreshold) {
+				veryLargeEntrySizeClass = this->sizeToIndexFP(veryLargeObjectThreshold, sizeClassRatioLogInversed);
+				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = indexToSizeFP(veryLargeEntrySizeClass, sizeClassRatio);
+			} else {
+				veryLargeEntrySizeClass = largestClassSizeIndex + 1;
+				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = UDATA_MAX;
+			}
 		}
-		extensions->largeObjectAllocationProfilingVeryLargeObjectSizeClass = veryLargeEntrySizeClass;
+
+		ext->largeObjectAllocationProfilingVeryLargeObjectSizeClass = veryLargeEntrySizeClass;
 
 		/* to prevent thread race condition -- before largeObjectAllocationProfilingVeryLargeObjectThreshold has been initialized, another thread might use the value, multi-entries is not issue. */
 		MM_AtomicOperations::writeBarrier();
-		extensions->freeMemoryProfileMaxSizeClasses = largestClassSizeIndex + 1;
+		ext->freeMemoryProfileMaxSizeClasses = largestClassSizeIndex + 1;
 	}
 }
 
@@ -92,8 +107,16 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 #endif	
 	_maxAllocateSizes = maxAllocateSizes;
 	_largeObjectThreshold = largeObjectThreshold;
-	_sizeClassRatio = sizeClassRatio;
-	_sizeClassRatioLogInversed = 1.0f / logf(_sizeClassRatio);
+
+	if (_shouldUseIntegerSizeToIndex) {
+		/* These values are hard coded in algorithm and not used for conversion, set for compatibility. */
+		_sizeClassRatio = 1.18920712f;
+		_sizeClassRatioLogInversed = 4.0f;
+	} else {
+		_sizeClassRatio = sizeClassRatio;
+		_sizeClassRatioLogInversed = 1.0f / logf(_sizeClassRatio);
+	}
+
 	_maxHeapSize = maxHeapSize;
 
 	/* To accurately maintain for stats for top _maxAllocateSizes different sizes,
@@ -118,7 +141,7 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 		return false;
 	}
 
-	MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(env, veryLargeObjectThreshold, sizeClassRatio, maxHeapSize);
+	this->initializeFreeMemoryProfileMaxSizeClasses(env, veryLargeObjectThreshold, sizeClassRatio, maxHeapSize);
 
 	if (!_freeEntrySizeClassStats.initialize(env, _maxAllocateSizes,  env->getExtensions()->freeMemoryProfileMaxSizeClasses, env->getExtensions()->largeObjectAllocationProfilingVeryLargeObjectThreshold, factorVeryLargeEntryPool)) {
 		return false;
@@ -126,13 +149,16 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 	_veryLargeEntrySizeClass = env->getExtensions()->largeObjectAllocationProfilingVeryLargeObjectSizeClass; 
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
-	uintptr_t largestTLHClassSizeIndex = (uintptr_t)(logf((float)tlhMaximumSize) * _sizeClassRatioLogInversed);
+	uintptr_t largestTLHClassSizeIndex = (_shouldUseIntegerSizeToIndex)
+			? this->sizeToIndexInt(tlhMaximumSize)
+			: this->sizeToIndexFP(tlhMaximumSize, _sizeClassRatioLogInversed);
+
 	uintptr_t maxTLHSizeClasses = largestTLHClassSizeIndex + 1;
 
 	if (!_tlhAllocSizeClassStats.initialize(env, 0,  maxTLHSizeClasses, UDATA_MAX)) {
 		return false;
 	}
-#endif
+#endif /* defined(OMR_GC_THREAD_LOCAL_HEAP) */
 
 	_sizeClassSizes = (uintptr_t *)env->getForge()->allocate(sizeof(uintptr_t) * _freeEntrySizeClassStats._maxSizeClasses, OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
 
@@ -140,9 +166,15 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 		return false;
 	}
 
-	for (uintptr_t sizeClassIndex = 0; sizeClassIndex < _freeEntrySizeClassStats._maxSizeClasses; sizeClassIndex++) {
-		/* TODO: this is rather an approximation (at least due to insufficient precision of double math) */
-		_sizeClassSizes[sizeClassIndex] = (uintptr_t)powf(_sizeClassRatio, (float)sizeClassIndex);
+	if (_shouldUseIntegerSizeToIndex) {
+		for (uintptr_t sizeClassIndex = 0; sizeClassIndex < _freeEntrySizeClassStats._maxSizeClasses; sizeClassIndex++) {
+			_sizeClassSizes[sizeClassIndex] = this->indexToSizeInt(sizeClassIndex);
+		}
+	} else {
+		for (uintptr_t sizeClassIndex = 0; sizeClassIndex < _freeEntrySizeClassStats._maxSizeClasses; sizeClassIndex++) {
+			/* TODO: this is rather an approximation (at least due to insufficient precision of double math) */
+			_sizeClassSizes[sizeClassIndex] = this->indexToSizeFP(sizeClassIndex, _sizeClassRatio);
+		}
 	}
 
 	return true;
@@ -223,7 +255,16 @@ MM_LargeObjectAllocateStats::allocateObject(uintptr_t allocateSize)
 		spaceSavingUpdate(_spaceSavingSizes, (void *)allocateSize, allocateSize);
 
 		/* find in which size class object belongs to and update the stats for the size class itself. */
-		uintptr_t sizeClass = (uintptr_t)(powf(_sizeClassRatio, (float)ceil(logf((float)allocateSize) * _sizeClassRatioLogInversed)));
+		uintptr_t sizeClass = 0;
+		if (_shouldUseIntegerSizeToIndex) {
+			/* use size correspondent with top of the range (bottom of the next one) */
+			sizeClass = this->indexToSizeInt(this->sizeToIndexInt(allocateSize) + 1);
+		} else {
+			// to do: remove comment: this is not exactly what was used before but semantically close
+			// uintptr_t sizeClass = (uintptr_t)(powf(_sizeClassRatio, (float)ceil(logf((float)allocateSize) * _sizeClassRatioLogInversed)));
+			sizeClass = this->indexToSizeFP(this->sizeToIndexFP(allocateSize, _sizeClassRatioLogInversed) + 1, _sizeClassRatio);
+		}
+
 		spaceSavingUpdate(_spaceSavingSizeClasses, (void *)sizeClass, sizeClass);
 	}
 }
@@ -1107,18 +1148,14 @@ MM_LargeObjectAllocateStats::decrementFreeEntrySizeClassStats(uintptr_t freeEntr
 uintptr_t
 MM_LargeObjectAllocateStats::getSizeClassIndex(uintptr_t size)
 {
-	float logValue = logf((float)size);
-	/*
-	 * We discovered a data corruption in this function
-	 * The reason for it is a corruption of float point registers at time of switching of context
-	 * for a few RT Linux kernels. If one of this assertions is triggered call for IT Support to check/update
-	 * a Linux kernel on problematic machine
-	 */
+	uintptr_t result = 0;
+	if (_shouldUseIntegerSizeToIndex) {
+		result = this->sizeToIndexInt(size);
+	} else {
+		result = this->sizeToIndexFP(size, _sizeClassRatioLogInversed);
+	}
 
-	/* the logarithm can not be negative! */
-	Assert_GC_true_with_message2(_env, (logValue >= 0.0), "Error calculation logf(), passed %zu, returned %f\n", size, logValue);
-
-	uintptr_t result = (uintptr_t)(logValue * _sizeClassRatioLogInversed);
+	//!!! to do: should (size < 8) be controlled here as well?
 
 	/* the logarithm value is larger then we can accept - probably larger then logf(UDATA_MAX) */
 	Assert_GC_true_with_message2(_env, ((_freeEntrySizeClassStats._maxSizeClasses == 0) || (result < _freeEntrySizeClassStats._maxSizeClasses)),

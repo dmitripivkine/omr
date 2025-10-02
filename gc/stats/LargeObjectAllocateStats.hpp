@@ -23,11 +23,14 @@
 #ifndef LARGEOBJECTALLOCATESTATS_HPP_
 #define LARGEOBJECTALLOCATESTATS_HPP_
 
+#include <math.h>
+
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "spacesaving.h"
 
 #include "Base.hpp"
+#include "Bits.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
@@ -74,6 +77,8 @@ private:
 
 	uintptr_t _TLHSizeClassIndex; /**< preserved next value of sizeClassIndex on last invocation of simulateAllocateTLHs */
 	uintptr_t _TLHFrequentAllocationSize;/**< preserved next value of FrequentAllocationSize on last invocation of simulateAllocateTLHs */
+
+	const bool _shouldUseIntegerSizeToIndex; /**< should use conversion in integers to calculate index to size and back */
 
 	MMINLINE uintptr_t getNextSizeClass(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
 	MMINLINE bool isFirstIterationCompleteForCurrentStride(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
@@ -222,6 +227,66 @@ public:
 	uintptr_t getFreeMemory(){return _freeEntrySizeClassStats.getFreeMemory(_sizeClassSizes);}
 	uintptr_t getPageAlignedFreeMemory(uintptr_t pageSize) {return _freeEntrySizeClassStats.getPageAlignedFreeMemory(_sizeClassSizes, pageSize);}
 
+	/**
+	 * Helper function to convert size to index using integers.
+	 * In general conversion looks like index = logBase(size).
+	 * Using log2(), this conversion can be written as index = log2(size)*(1/log2(base)).
+	 * This function is hard coded to use 4 as 1/log2(base). It is corresponds with base = 1.18920712.
+	 * Such selected value allows to use approximated log2() * 4 value as an index.
+	 * Calculation of log2() is approximated:
+	 * - integer part of log2() is calculated as MSB position;
+	 * - next two bits are used for fractional part calculation (0,0.25,0.5,0.75).
+	 * MSB position is calculated as topBit position minus number of leading zeroes.
+	 * Number of leading zeroes is returned by MM_Bits::trailingZeroes().
+	 * Please note, there is limitation for input size >= 8. Caller sites should control this.
+	 * Please note this function supports 64 and 32 bit platforms.
+	 *
+	 * @param size needs to be converted to the index.
+	 * @return index correspondent to the size.
+	 */
+	MMINLINE static uintptr_t sizeToIndexInt(uintptr_t size)
+	{
+		const uintptr_t topBit = sizeof(uintptr_t) * 8 - 1;
+
+		uintptr_t leading = MM_Bits::trailingZeroes(size);
+		uintptr_t index = 4 * (topBit - leading) + ((size >> (topBit - leading - 2)) & 0x3);
+
+		return index;
+	}
+
+	/**
+	 * Helper function to convert index to minimum size value for the range.
+	 * This calculation is reversal to sizeToIndexInt(), see comment there.
+	 *
+	 * @param index needs to be converted to the size.
+	 * @return minimum size for the range correspondent to the index.
+	 */
+	MMINLINE static uintptr_t indexToSizeInt(uintptr_t index)
+	{
+		uintptr_t size = 0;
+
+		if (8 <= index) {
+			size = (4 + (index & 3)) << (index / 4 - 2);
+		} else {
+			size = index / 4 + 1;
+		}
+		return size;
+	}
+
+	MMINLINE static uintptr_t sizeToIndexFP(uintptr_t size, float ratioInversed)
+	{
+		float logValue = logf((float)size);
+		uintptr_t index = (uintptr_t)(logValue * ratioInversed);
+
+		return index;
+	}
+
+	MMINLINE static uintptr_t indexToSizeFP(uintptr_t index, float ratio)
+	{
+		uintptr_t size = (uintptr_t)powf(ratio, (float)index);
+
+		return size;
+	}
 
 	MM_LargeObjectAllocateStats(MM_EnvironmentBase* env) :
 		_env(env),
@@ -247,7 +312,10 @@ public:
 		_freeMemoryBeforeEstimate(0),
 		_maxHeapSize(0),
 		_TLHSizeClassIndex(0),
-		_TLHFrequentAllocationSize(0)
+		_TLHFrequentAllocationSize(0),
+		// to do: use real value instead of debug
+		//_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
+		_shouldUseIntegerSizeToIndex(2 == env->getExtensions()->debug)
 	{
 	}
 
