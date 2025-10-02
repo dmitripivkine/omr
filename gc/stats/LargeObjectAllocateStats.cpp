@@ -27,9 +27,9 @@
 
 #include "omrport.h"
 
-#include "EnvironmentBase.hpp"
+//#include "EnvironmentBase.hpp"
 #include "Forge.hpp"
-#include "GCExtensionsBase.hpp"
+//#include "GCExtensionsBase.hpp"
 #include "ModronAssertions.h"
 #include "AtomicOperations.hpp"
 
