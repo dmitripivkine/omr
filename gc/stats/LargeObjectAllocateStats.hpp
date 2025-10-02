@@ -244,7 +244,7 @@ public:
 	 */
 	MMINLINE static uintptr_t sizeToIndexInt(uintptr_t size)
 	{
-		const uintptr_t topBit = sizeof(uintptr_t) * 8 - 1;
+		const uintptr_t topBit = J9BITS_BITS_IN_SLOT - 1;
 
 		uintptr_t leading = MM_Bits::trailingZeroes(size);
 		uintptr_t index = 4 * (topBit - leading) + ((size >> (topBit - leading - 2)) & 0x3);
@@ -271,20 +271,9 @@ public:
 		return size;
 	}
 
-	MMINLINE static uintptr_t sizeToIndexFP(uintptr_t size, float ratioInversed)
-	{
-		float logValue = logf((float)size);
-		uintptr_t index = (uintptr_t)(logValue * ratioInversed);
+	MMINLINE static uintptr_t sizeToIndexFP(uintptr_t size, float ratioInversed);
 
-		return index;
-	}
-
-	MMINLINE static uintptr_t indexToSizeFP(uintptr_t index, float ratio)
-	{
-		uintptr_t size = (uintptr_t)powf(ratio, (float)index);
-
-		return size;
-	}
+	MMINLINE static uintptr_t indexToSizeFP(uintptr_t index, float ratio);
 
 	MM_LargeObjectAllocateStats(MM_EnvironmentBase* env) :
 		_env(env),

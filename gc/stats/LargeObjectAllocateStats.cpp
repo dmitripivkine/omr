@@ -1181,3 +1181,21 @@ MM_LargeObjectAllocateStats::verifyFreeEntryCount(uintptr_t actualFreeEntryCount
 	}
 	Assert_MM_true(totalCount == actualFreeEntryCount);
 }
+
+MMINLINE static uintptr_t
+MM_LargeObjectAllocateStats::sizeToIndexFP(uintptr_t size, float ratioInversed)
+{
+	float logValue = logf((float)size);
+	uintptr_t index = (uintptr_t)(logValue * ratioInversed);
+
+	return index;
+}
+
+MMINLINE static uintptr_t
+MM_LargeObjectAllocateStats::indexToSizeFP(uintptr_t index, float ratio)
+{
+	uintptr_t size = (uintptr_t)powf(ratio, (float)index);
+
+	return size;
+}
+
