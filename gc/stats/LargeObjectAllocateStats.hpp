@@ -30,6 +30,7 @@
 #include "Base.hpp"
 #include "Bits.hpp"
 #include "EnvironmentBase.hpp"
+#include "GCExtensionsBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
