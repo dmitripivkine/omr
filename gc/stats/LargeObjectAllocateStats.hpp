@@ -29,12 +29,13 @@
 
 #include "Base.hpp"
 #include "Bits.hpp"
+#include "EnvironmentBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
 
-class MM_EnvironmentBase;
-class MM_FreeEntrySizeClassStats;
+//class MM_EnvironmentBase;
+//class MM_FreeEntrySizeClassStats;
 
 /*
  * Keeps track of the most frequent large allocations
