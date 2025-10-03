@@ -29,12 +29,13 @@
 
 #include "Base.hpp"
 #include "Bits.hpp"
+#include "EnvironmentBase.hpp"
+#include "GCExtensionsBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
 
-class MM_EnvironmentBase;
-//class MM_FreeEntrySizeClassStats;
+//class MM_EnvironmentBase;
 
 /*
  * Keeps track of the most frequent large allocations
@@ -76,7 +77,7 @@ private:
 	uintptr_t _TLHSizeClassIndex; /**< preserved next value of sizeClassIndex on last invocation of simulateAllocateTLHs */
 	uintptr_t _TLHFrequentAllocationSize;/**< preserved next value of FrequentAllocationSize on last invocation of simulateAllocateTLHs */
 
-	bool _shouldUseIntegerSizeToIndex; /**< should use conversion in integers to calculate index to size and back */
+	const bool _shouldUseIntegerSizeToIndex; /**< should use conversion in integers to calculate index to size and back */
 
 	MMINLINE uintptr_t getNextSizeClass(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
 	MMINLINE bool isFirstIterationCompleteForCurrentStride(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
@@ -300,7 +301,8 @@ public:
 		_maxHeapSize(0),
 		_TLHSizeClassIndex(0),
 		_TLHFrequentAllocationSize(0),
-		_shouldUseIntegerSizeToIndex(false)
+		_shouldUseIntegerSizeToIndex(env->getExtensions()->debug == 2)
+//		_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
 	{
 	}
 
