@@ -23,8 +23,6 @@
 #ifndef LARGEOBJECTALLOCATESTATS_HPP_
 #define LARGEOBJECTALLOCATESTATS_HPP_
 
-#include <cmath>
-
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "spacesaving.h"
@@ -275,25 +273,7 @@ public:
 	}
 
 	MMINLINE static uintptr_t sizeToIndexFP(uintptr_t size, float ratioInversed);
-
 	MMINLINE static uintptr_t indexToSizeFP(uintptr_t index, float ratio);
-
-	MMINLINE static uintptr_t
-	MM_LargeObjectAllocateStats::sizeToIndexFP1(uintptr_t size, float ratioInversed)
-	{
-		float logValue = std::logf((float)size);
-		uintptr_t index = (uintptr_t)(logValue * ratioInversed);
-
-		return index;
-	}
-
-	MMINLINE static uintptr_t
-	MM_LargeObjectAllocateStats::indexToSizeFP1(uintptr_t index, float ratio)
-	{
-		uintptr_t size = (uintptr_t)std::powf(ratio, (float)index);
-
-		return size;
-	}
 
 
 	MM_LargeObjectAllocateStats(MM_EnvironmentBase* env) :
@@ -321,7 +301,7 @@ public:
 		_maxHeapSize(0),
 		_TLHSizeClassIndex(0),
 		_TLHFrequentAllocationSize(0),
-		_shouldUseIntegerSizeToIndex(false)
+		_shouldUseIntegerSizeToIndex(true)
 //		_shouldUseIntegerSizeToIndex(env->getExtensions()->debug == 2)
 //		_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
 	{

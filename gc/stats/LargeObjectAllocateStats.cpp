@@ -101,7 +101,6 @@ MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(MM_Enviro
 bool
 MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAllocateSizes, uintptr_t largeObjectThreshold, uintptr_t veryLargeObjectThreshold, float sizeClassRatio, uintptr_t maxHeapSize, uintptr_t tlhMaximumSize, uintptr_t tlhMinimumSize, uintptr_t factorVeryLargeEntryPool)
 {
-	MM_GCExtensionsBase *ext = env->getExtensions();
 	OMRPortLibrary *portLibrary = env->getPortLibrary();
 
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
@@ -111,7 +110,8 @@ MM_LargeObjectAllocateStats::initialize(MM_EnvironmentBase *env, uint16_t maxAll
 	_maxAllocateSizes = maxAllocateSizes;
 	_largeObjectThreshold = largeObjectThreshold;
 
-	_shouldUseIntegerSizeToIndex = (2 == ext->debug);
+//	MM_GCExtensionsBase *ext = env->getExtensions();
+//	_shouldUseIntegerSizeToIndex = (2 == ext->debug);
 //	_shouldUseIntegerSizeToIndex = ext->shouldUseIntegerSizeToIndex;
 
 
