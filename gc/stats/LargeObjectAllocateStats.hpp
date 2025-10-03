@@ -302,7 +302,7 @@ public:
 		_TLHSizeClassIndex(0),
 		_TLHFrequentAllocationSize(0),
 		_shouldUseIntegerSizeToIndex(_env->getExtensions()->debug == 2)
-//		_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
+//		_shouldUseIntegerSizeToIndex(_env->getExtensions()->shouldUseIntegerSizeToIndex)
 	{
 	}
 
