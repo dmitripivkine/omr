@@ -66,11 +66,11 @@ MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(MM_Enviro
 		uintptr_t largestClassSizeIndex = 0;
 
 		if (ext->shouldUseIntegerSizeToIndex) {
-			largestClassSizeIndex = this->sizeToIndexInt(maxHeapSize);
+			largestClassSizeIndex = MM_LargeObjectAllocateStats::sizeToIndexInt(maxHeapSize);
 
 			/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold and largeObjectAllocationProfilingVeryLargeObjectSizeClass */
 			if (ext->memoryMax > veryLargeObjectThreshold) {
-				veryLargeEntrySizeClass = this->sizeToIndexInt(veryLargeObjectThreshold);
+				veryLargeEntrySizeClass = MM_LargeObjectAllocateStats::sizeToIndexInt(veryLargeObjectThreshold);
 				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = indexToSizeInt(veryLargeEntrySizeClass);
 			} else {
 				veryLargeEntrySizeClass = largestClassSizeIndex + 1;
@@ -78,11 +78,11 @@ MM_LargeObjectAllocateStats::initializeFreeMemoryProfileMaxSizeClasses(MM_Enviro
 			}
 		} else {
 			float sizeClassRatioLogInversed = 1.0f / logf(sizeClassRatio);
-			largestClassSizeIndex = this->sizeToIndexFP(maxHeapSize, sizeClassRatioLogInversed);
+			largestClassSizeIndex = MM_LargeObjectAllocateStats::sizeToIndexFP(maxHeapSize, sizeClassRatioLogInversed);
 
 			/* initialize largeObjectAllocationProfilingVeryLargeObjectThreshold and largeObjectAllocationProfilingVeryLargeObjectSizeClass */
 			if (ext->memoryMax > veryLargeObjectThreshold) {
-				veryLargeEntrySizeClass = this->sizeToIndexFP(veryLargeObjectThreshold, sizeClassRatioLogInversed);
+				veryLargeEntrySizeClass = MM_LargeObjectAllocateStats::sizeToIndexFP(veryLargeObjectThreshold, sizeClassRatioLogInversed);
 				ext->largeObjectAllocationProfilingVeryLargeObjectThreshold = indexToSizeFP(veryLargeEntrySizeClass, sizeClassRatio);
 			} else {
 				veryLargeEntrySizeClass = largestClassSizeIndex + 1;
