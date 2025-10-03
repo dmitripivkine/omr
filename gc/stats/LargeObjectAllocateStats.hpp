@@ -23,19 +23,21 @@
 #ifndef LARGEOBJECTALLOCATESTATS_HPP_
 #define LARGEOBJECTALLOCATESTATS_HPP_
 
+#include <cmath>
+
 #include "omrcfg.h"
 #include "omrcomp.h"
 #include "spacesaving.h"
 
 #include "Base.hpp"
 #include "Bits.hpp"
-#include "EnvironmentBase.hpp"
-#include "GCExtensionsBase.hpp"
+//#include "EnvironmentBase.hpp"
+//#include "GCExtensionsBase.hpp"
 #include "LightweightNonReentrantLock.hpp"
 
 #include "FreeEntrySizeClassStats.hpp"
 
-//class MM_EnvironmentBase;
+class MM_EnvironmentBase;
 
 /*
  * Keeps track of the most frequent large allocations
@@ -77,7 +79,7 @@ private:
 	uintptr_t _TLHSizeClassIndex; /**< preserved next value of sizeClassIndex on last invocation of simulateAllocateTLHs */
 	uintptr_t _TLHFrequentAllocationSize;/**< preserved next value of FrequentAllocationSize on last invocation of simulateAllocateTLHs */
 
-	const bool _shouldUseIntegerSizeToIndex; /**< should use conversion in integers to calculate index to size and back */
+	/* const */ bool _shouldUseIntegerSizeToIndex; /**< should use conversion in integers to calculate index to size and back */
 
 	MMINLINE uintptr_t getNextSizeClass(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
 	MMINLINE bool isFirstIterationCompleteForCurrentStride(uintptr_t sizeClassIndex, uintptr_t maxSizeClasses);
@@ -276,6 +278,24 @@ public:
 
 	MMINLINE static uintptr_t indexToSizeFP(uintptr_t index, float ratio);
 
+	MMINLINE static uintptr_t
+	MM_LargeObjectAllocateStats::sizeToIndexFP1(uintptr_t size, float ratioInversed)
+	{
+		float logValue = std::logf((float)size);
+		uintptr_t index = (uintptr_t)(logValue * ratioInversed);
+
+		return index;
+	}
+
+	MMINLINE static uintptr_t
+	MM_LargeObjectAllocateStats::indexToSizeFP1(uintptr_t index, float ratio)
+	{
+		uintptr_t size = (uintptr_t)std::powf(ratio, (float)index);
+
+		return size;
+	}
+
+
 	MM_LargeObjectAllocateStats(MM_EnvironmentBase* env) :
 		_env(env),
 #if defined(OMR_GC_THREAD_LOCAL_HEAP)
@@ -301,8 +321,9 @@ public:
 		_maxHeapSize(0),
 		_TLHSizeClassIndex(0),
 		_TLHFrequentAllocationSize(0),
-		_shouldUseIntegerSizeToIndex(_env->getExtensions()->debug == 2)
-//		_shouldUseIntegerSizeToIndex(_env->getExtensions()->shouldUseIntegerSizeToIndex)
+		_shouldUseIntegerSizeToIndex(false)
+//		_shouldUseIntegerSizeToIndex(env->getExtensions()->debug == 2)
+//		_shouldUseIntegerSizeToIndex(env->getExtensions()->shouldUseIntegerSizeToIndex)
 	{
 	}
 
