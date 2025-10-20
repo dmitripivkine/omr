@@ -235,6 +235,7 @@
 #define OMRPORT_VMEM_ALLOCATE_TOP_DOWN 0x00000020
 #define OMRPORT_VMEM_ALLOCATE_PERSIST 0x00000040
 #define OMRPORT_VMEM_NO_AFFINITY 0x00000080
+#define OMRPORT_VMEM_MEMORY_MODE_GUARDED 0x00000100
 /** @} */
 
 /**
@@ -499,6 +500,10 @@ typedef struct J9PortVmemParams {
 	 * \arg OMRPORT_VMEM_MEMORY_MODE_VIRTUAL used only on z/OS
 	 *			- used to allocate memory in 4K pages using system macros instead of malloc() or __malloc31() routines
 	 *			- on 64-bit, this mode rounds up byteAmount to be aligned to 1M boundary.*
+	 * \arg OMRPORT_VMEM_MEMORY_MODE_GUARDED
+	 * 		- enabled for ZOS only
+	 * 		- If not set, do not guard allocated memory
+	 * 		- If set, guard allocated memory during reservation time, un-guard during commit and un-guard during decommit
 	 */
 	uintptr_t mode;
 
